@@ -1,3 +1,49 @@
+/**
+ ***************************************************
+ * @file    main.c
+ * @author  Taylor Chou
+ * @version 1.0.0
+ * @date    2026-03-05
+ * @brief   TLV (Type-Length-Value) Protocol Parser and Serializer
+ *
+ * ==========================================
+ * 描述
+ * ==========================================
+ * 本模組提供 TLV 協議的解析與序列化功能，支援多種資料型態的編碼與解碼。
+ * 適用於嵌入式設備通訊、無線協議、以及任何需要輕量級結構化資料傳輸的場景。
+ *
+ * 功能：
+ *   - 逐個解析 TLV 節點，並自動跳至下一個節點
+ *   - 將資料依照 TLV 格式輸入到緩衝區
+ *   - 零複製 (Zero-Copy) 方式指向原始資料，降低記憶體開銷
+ *
+ * ==========================================
+ * DESCRIPTION
+ * ==========================================
+ * This module provides TLV (Type-Length-Value) parsing and serialization for embedded systems, wireless protocols, and lightweight structured data transfer.
+ *
+ * Features:
+ *   - Parse TLV nodes sequentially with automatic offset tracking
+ *   - Serialize data into TLV format and write to buffer
+ *   - Zero-copy design pointing to original data for minimal memory overhead
+ *
+ * ==========================================
+ * USAGE EXAMPLE (使用範例)
+ * ==========================================
+ * Input Packet (46 bytes):
+ *   01 0B 4A 61 73 6F 6E 20 48 61 75 6E 67  02 04 00 00 D4 31
+ *   04 03 52 26 44  05 01 1E  06 11 48 65 6C 6C 6F 20 54 61 69 77 61 6E 20 32 30 32 36
+ *
+ * Parse Output:
+ *   Type=0x01 (Name),       Length=11,  Value="Jason Haung"
+ *   Type=0x02 (ID),         Length=4,   Value=54321
+ *   Type=0x04 (Department), Length=3,   Value="R&D"
+ *   Type=0x05 (Age),        Length=1,   Value=30
+ *   Type=0x06 (Note),       Length=17,  Value="Hello Taiwan 2026"
+ *
+ * ***************************************************
+ */
+
 #include <stdio.h>
 #include <locale.h>
 #include "tlv_parser.h"
