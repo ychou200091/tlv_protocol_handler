@@ -63,6 +63,11 @@ static void init_runtime(void) {
     if (setlocale(LC_ALL, "") == NULL) {
         (void)setlocale(LC_ALL, "C");
     }
+
+    /* 偵測並印出 host byte order，在主邏輯執行前確認平台字節序
+     * Detect and report host byte order before any protocol logic runs. */
+    printf("[Init] Host byte order: %s-endian\n",
+           host_is_le() ? "Little" : "Big");
 }
 
 static void print_hex(const uint8_t *data, uint8_t len) {
@@ -93,11 +98,8 @@ static void print_value(const tlv_node_t *node) {
 			break;
 		case TLV_VALUE_KIND_UINT32_BE:
 			if (node->length == 4U) {
-				unsigned int number = ((unsigned int)node->value[0] << 24U) |
-									 ((unsigned int)node->value[1] << 16U) |
-									 ((unsigned int)node->value[2] << 8U) |
-									 (unsigned int)node->value[3];
-				printf("%u", number);
+				// 從 wire 讀出 big-endian bytes，還原成 host-order 整數後印出Read big-endian wire bytes back to a host-order integer.
+				printf("%u", (unsigned int)tlv_be_to_u32(node->value));
 			} else {
 				print_hex(node->value, node->length);
 			}
@@ -118,13 +120,15 @@ int main(void) {
 	tlv_status_t status;
 
 	const uint8_t name[] = "Jason Haung";
-	const uint8_t id_be[4] = {0x00U, 0x00U, 0xD4U, 0x31U}; // 54321 的 big-endian 表示
+	const uint32_t id_val = 543210U; 
+	uint8_t id_be[4];  // will hold big-endian wire bytes
+	                                
 	const uint8_t department[] = "R&D";
 	const uint8_t age[1] = {30U};
 	const uint8_t note[] = "Hello Taiwan 2026";
 
-	init_runtime();
-	
+	init_runtime(); 
+
     // 寫入buffer1 name
 	status = tlv_serialize_one(TLV_TYPE_NAME, (uint8_t)(sizeof(name) - 1U), name,packet + used, sizeof(packet) - used, &written);
 	if (status != TLV_SUCCESS) {
@@ -132,9 +136,11 @@ int main(void) {
 		return 1;
 	}
 	used += written;
-    // 寫入buffer2 id
-	status = tlv_serialize_one(TLV_TYPE_ID, (uint8_t)sizeof(id_be), id_be,
-						   packet + used, sizeof(packet) - used, &written);
+    
+	// 寫入buffer2 id
+	tlv_u32_to_be(id_val, id_be); // Convert uint32 to big-endian wire bytes
+	// 寫入buffer時採用 big-endian bytes，確保跨平台一致性。
+	status = tlv_serialize_one(TLV_TYPE_ID, (uint8_t)sizeof(id_be), id_be,packet + used, sizeof(packet) - used, &written);
 	if (status != TLV_SUCCESS) {
 		printf("Serialize failed: %d\n", (int)status);
 		return 1;
@@ -142,8 +148,7 @@ int main(void) {
 	used += written;
 
     // 寫入buffer3 department
-	status = tlv_serialize_one(TLV_TYPE_DEPARTMENT, (uint8_t)(sizeof(department) - 1U), department,
-						   packet + used, sizeof(packet) - used, &written);
+	status = tlv_serialize_one(TLV_TYPE_DEPARTMENT, (uint8_t)(sizeof(department) - 1U), department, packet + used, sizeof(packet) - used, &written);
 	if (status != TLV_SUCCESS) {
 		printf("Serialize failed: %d\n", (int)status);
 		return 1;
@@ -151,8 +156,7 @@ int main(void) {
 	used += written;
 
     // 寫入buffer4 age
-	status = tlv_serialize_one(TLV_TYPE_AGE, (uint8_t)sizeof(age), age,
-						   packet + used, sizeof(packet) - used, &written);
+	status = tlv_serialize_one(TLV_TYPE_AGE, (uint8_t)sizeof(age), age,packet + used, sizeof(packet) - used, &written);
 	if (status != TLV_SUCCESS) {
 		printf("Serialize failed: %d\n", (int)status);
 		return 1;
@@ -160,8 +164,7 @@ int main(void) {
 	used += written;
 
     // 寫入buffer5 note
-	status = tlv_serialize_one(TLV_TYPE_NOTE, (uint8_t)(sizeof(note) - 1U), note,
-						   packet + used, sizeof(packet) - used, &written);
+	status = tlv_serialize_one(TLV_TYPE_NOTE, (uint8_t)(sizeof(note) - 1U), note,packet + used, sizeof(packet) - used, &written);
 	if (status != TLV_SUCCESS) {
 		printf("Serialize failed: %d\n", (int)status);
 		return 1;

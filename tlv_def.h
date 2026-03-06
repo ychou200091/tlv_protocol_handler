@@ -49,4 +49,44 @@ const char *tlv_type_name(uint8_t type);
 // Determine how to interpret the value based on the type.
 // Ex: id is uint32, age is uint8, name is text, etc.
 tlv_value_kind_t tlv_type_value_kind(uint8_t type); 
+
+/* [Endianness Check (手刻，不使用 library)]
+ * Runtime detection: returns 1 if host is little-endian, 0 if big-endian.
+ * Wire format is always big-endian (network byte order).
+ * 
+ * 原理：將 0x0001 存入 uint16_t，若記憶體最低地址存放的是 0x01（LSB），
+ * 則表示 host 為 little-endian。
+ *
+ * Principle: store 0x0001 in a uint16_t; if the byte at the lowest address
+ * is 0x01 (the LSB), the host is little-endian.
+ *
+ */
+static inline int host_is_le(void) {
+    const uint16_t probe = 0x0001U;
+    // [0] = 0x01, [1] = 0x00 -> little-endian
+    // [0] = 0x00, [1] = 0x01 -> big-endian
+    return *((const uint8_t *)&probe) == 0x01U;
+}
+
+/*
+Write a 32-bit host-order integer into 4 big-endian wire bytes.
+*/
+static inline void tlv_u32_to_be(uint32_t val, uint8_t out[4]) {
+    out[0] = (uint8_t)((val >> 24U) & 0xFFU);
+    out[1] = (uint8_t)((val >> 16U) & 0xFFU);
+    out[2] = (uint8_t)((val >>  8U) & 0xFFU);
+    out[3] = (uint8_t)( val         & 0xFFU);
+}
+
+/*
+Read 4 big-endian wire bytes and return a host-order uint32_t.
+
+*/
+static inline uint32_t tlv_be_to_u32(const uint8_t be[4]) {
+    return ((uint32_t)be[0] << 24U) |
+           ((uint32_t)be[1] << 16U) |
+           ((uint32_t)be[2] <<  8U) |
+            (uint32_t)be[3]; // using math, the machine's endianness doesn't matter. It will always produce the correct host-order uint32_t. 一定是主機的endian
+}
+
 #endif
