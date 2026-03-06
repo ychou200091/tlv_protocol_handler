@@ -41,10 +41,8 @@ tlv_value_kind_t tlv_type_value_kind(uint8_t type) {
 確認 buffer 裡的 value 長度足夠，把 *offset 往後移到下一個 TLV 起點。
 Return Value: TLV_SUCCESS, TLV_ERR_BUFFER_TOO_SHORT, TLV_ERR_INVALID_LENGTH, TLV_ERR_INVALID_ARG
 */
-tlv_status_t tlv_parse_next(const uint8_t *buffer,
-							size_t buf_len,
-							size_t *offset,
-							tlv_node_t *out_node) {
+tlv_status_t tlv_parse_next(const uint8_t *buffer, size_t buf_len,
+							size_t *offset, tlv_node_t *out_node) {
 	size_t pos;
 	size_t value_start;
 	size_t remaining;
@@ -83,12 +81,9 @@ tlv_status_t tlv_parse_next(const uint8_t *buffer,
 
 Return Value: TLV_SUCCESS, TLV_ERR_BUFFER_TOO_SHORT, TLV_ERR_INVALID_ARG
 */
-tlv_status_t tlv_serialize_one(uint8_t type,
-							   uint8_t length,
-							   const uint8_t *value,
-							   uint8_t *out_buf,
-							   size_t out_len,
-							   size_t *written) {
+tlv_status_t tlv_serialize_one(uint8_t type, uint8_t length,
+							   const uint8_t *value, uint8_t *out_buf,
+							   size_t out_len, size_t *written) {
 	size_t needed = TLV_HEADER_SIZE + (size_t)length;
 
 	if (out_buf == NULL || written == NULL) {
