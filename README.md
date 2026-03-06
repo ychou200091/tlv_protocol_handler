@@ -19,13 +19,14 @@
 假設我們要傳輸：`Name: "Taiwan98765"`, `ID: 54321`
 
 * Type: 0x01 (Name), Length: 0x0B, Value: `Taiwan98765`
-* Type: 0x02 (ID), Length: 0x04, Value: 0xD0000431
+* Type: 0x02 (ID), Length: 0x04, Value: 0x0000D431
 
 **完整原始數據 (Hex):** `01 0B 54 61 69 77 61 6E 39 38 37 36 35 02 04 00 00 D4 31`
 
 ---
 
 ## 功能需求 (Functional Requirements)
+
 - 本專案內採用`uint8_t`類型的 Buffer，會將資料寫入buffer或是從buffer取出資料。
 - 所有多位元組整數欄位皆以 big-endian 存放於 buffer。
 - Zero-copy：解析時 value 欄位永遠指向原始 buffer，不會 malloc。
@@ -70,8 +71,10 @@ typedef struct {
     const uint8_t *value; // 指向原始數據(Zero-copy)
 } tlv_node_t;
 
-// 解析核心 API
+// 解析資訊的API
 tlv_status_t tlv_parse_next(const uint8_t *buffer, size_t buf_len, size_t *offset, tlv_node_t *out_node);
+// 序列化資訊為TLV格式並存入buffer的API
+tlv_status_t tlv_serialize_one(uint8_t type, uint8_t length,const uint8_t *value, uint8_t *out_buf, size_t out_len, size_t *written);
 
 ```
 ---
